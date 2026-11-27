@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>白酒年报问答知识库</title>
+<style>
+  :root {
+    --navy: #16294a; --navy-soft: #2b4470; --cream: #f7f3e9; --paper: #fffdf8;
+    --ink: #1d2738; --muted: #5d6678; --line: #ddd6c8; --accent: #b8860b;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--cream); color: var(--ink);
+    font-family: "PingFang SC","Microsoft YaHei",sans-serif; font-size: 15px; line-height: 1.7; }
+  .wrap { width: min(100% - 2rem, 920px); margin: 0 auto; padding: 2.5rem 0 4rem; }
+  header { text-align: center; padding-bottom: 1.8rem; border-bottom: 1px solid var(--line); }
+  header h1 { font-family: "Songti SC","SimSun",serif; color: var(--navy);
+    font-size: 1.9rem; letter-spacing: .08em; margin: 0 0 .4rem; }
+  header p { margin: 0; color: var(--muted); font-size: .9rem; }
+  .badges { margin-top: 1rem; display: flex; gap: .5rem; justify-content: center; flex-wrap: wrap; }
+  .badge { background: var(--paper); border: 1px solid var(--line); color: var(--navy-soft);
+    padding: .2rem .75rem; border-radius: 999px; font-size: .78rem; }
+
+  .searchbox { margin: 2rem 0 1rem; display: flex; gap: .6rem; flex-wrap: wrap; }
+  .searchbox input[type=text] { flex: 1 1 360px; padding: .85rem 1rem; font-size: 1rem;
+    border: 1px solid var(--line-strong); border-radius: 4px; background: var(--paper);
+    color: var(--ink); outline: none; }
+  .searchbox input[type=text]:focus { border-color: var(--navy-soft); box-shadow: 0 0 0 3px rgba(43,68,112,.1); }
+  .searchbox select { padding: .85rem .6rem; border: 1px solid var(--line-strong); border-radius: 4px;
+    background: var(--paper); color: var(--navy); font-size: .9rem; }
+  .searchbox button { padding: .85rem 1.6rem; background: var(--navy); color: white;
+    border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; }
+  .searchbox button:hover { background: var(--navy-soft); }
+  .searchbox button:disabled { opacity: .5; cursor: wait; }
+
+  .examples { margin-bottom: 1.8rem; }
+  .examples .lbl { color: var(--muted); font-size: .82rem; margin-bottom: .5rem; }
+  .chips { display: flex; flex-wrap: wrap; gap: .45rem; }
+  .chip { background: var(--paper); border: 1px solid var(--line); border-radius: 4px;
+    padding: .3rem .7rem; font-size: .8rem; color: var(--navy-soft); cursor: pointer; }
+  .chip:hover { border-color: var(--navy-soft); background: #f0ebdd; }
+
+  .status { color: var(--muted); font-size: .85rem; margin-bottom: 1rem; min-height: 1.2em; }
+  .card { background: var(--paper); border: 1px solid var(--line); border-left: 3px solid var(--navy-soft);
+    border-radius: 3px; padding: 1rem 1.2rem; margin-bottom: .9rem; }
+  .card .meta { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; margin-bottom: .5rem; }
+  .rank { background: var(--navy); color: white; width: 1.5rem; height: 1.5rem; border-radius: 50%;
+    display: inline-grid; place-items: center; font-size: .75rem; }
+  .co { color: var(--navy); font-weight: 600; }
+  .tag { font-size: .72rem; border: 1px solid var(--line); border-radius: 3px;
+    padding: .05rem .4rem; color: var(--muted); }
+  .tag.table { border-color: var(--accent); color: var(--accent); }
+  .score { margin-left: auto; color: var(--muted); font-size: .75rem; }
+  .card .body { white-space: pre-wrap; word-break: break-all; font-size: .9rem; color: #333c4b; }
+  .card .src { margin-top: .6rem; padding-top: .5rem; border-top: 1px dashed var(--line);
+    font-size: .75rem; color: var(--muted); }
+  mark { background: #ffe9a8; color: var(--navy); padding: 0 1px; }
+  .empty { text-align: center; color: var(--muted); padding: 3rem 0; }
+  footer { margin-top: 3rem; padding-top: 1.2rem; border-top: 1px solid var(--line);
+    text-align: center; color: var(--muted); font-size: .8rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>白酒年报问答知识库</h1>
+    <p>基于 12 家白酒上市公司 · 24 份年报 · 向量 + BM25 混合检索</p>
+    <div class="badges">
+      <span class="badge" id="badge-chunks">加载中…</span>
+      <span class="badge">BM25 关键词召回</span>
+      <span class="badge">TF-IDF 向量召回</span>
+      <span class="badge">RRF 融合排序</span>
+    </div>
+  </header>
+
+  <div class="searchbox">
+    <input type="text" id="q" placeholder="输入问题，例如：贵州茅台2024年的营业总收入是多少？" autocomplete="off">
+    <select id="company"><option value="">全部公司</option></select>
+    <select id="year"><option value="">全部年份</option></select>
+    <button id="go">检索</button>
+  </div>
+
+  <div class="examples">
+    <div class="lbl">试试这些例子（含跨公司全景题）：</div>
+    <div class="chips" id="chips"></div>
+  </div>
+
+  <div class="status" id="status"></div>
+  <div id="results"><div class="empty">输入问题，从年报原文中找答案与出处</div></div>
+
+  <footer>知识的深加工 · 第三课作业 A &nbsp;|&nbsp; 所有答案均来自年报原文，附公司 / 年份 / 页码出处</footer>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+let meta = null;
+
+async function init() {
+  meta = await (await fetch('/api/meta')).json();
+  $('#badge-chunks').textContent = meta.chunks.toLocaleString() + ' 个知识块';
+  meta.companies.forEach(c => $('#company').add(new Option(c, c)));
+  meta.years.forEach(y => $('#year').add(new Option(y + ' 年', y)));
+  meta.example_questions.forEach(q => {
+    const b = document.createElement('button');
+    b.className = 'chip'; b.textContent = q;
+    b.onclick = () => { $('#q').value = q; search(); };
+    $('#chips').appendChild(b);
+  });
+}
+
+async function search() {
+  const query = $('#q').value.trim();
+  if (!query) { $('#status').textContent = '请先输入问题'; return; }
+  $('#status').textContent = '检索中…';
+  $('#go').disabled = true;
+  $('#results').innerHTML = '';
+  try {
+    const r = await fetch('/api/search', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({query, company:$('#company').value, year:$('#year').value, topk:6})
+    });
+    const data = await r.json();
+    const hits = data.results || [];
+    $('#status').textContent = hits.length
+      ? `找到 ${hits.length} 条相关片段（按相关度排序）` : '未找到相关片段，试试换个说法';
+    if (!hits.length) {
+      $('#results').innerHTML = '<div class="empty">未找到相关片段</div>'; return;
+    }
+    hits.forEach((h, i) => {
+      const div = document.createElement('div');
+      div.className = 'card';
+      div.innerHTML = `
+        <div class="meta">
+          <span class="rank">${i+1}</span>
+          <span class="co">${h.company}</span>
+          <span class="tag">${h.year} 年</span>
+          <span class="tag ${h.type==='table'?'table':''}">${h.type==='table'?'表格':'正文'}</span>
+          <span class="score">相关度 ${h.score}</span>
+        </div>
+        <div class="body">${h.text}</div>
+        <div class="src">出处：${h.source}</div>`;
+      $('#results').appendChild(div);
+    });
+  } catch (e) {
+    $('#status').textContent = '检索失败：' + e.message;
+  } finally {
+    $('#go').disabled = false;
+  }
+}
+
+$('#go').onclick = search;
+$('#q').addEventListener('keydown', e => { if (e.key === 'Enter') search(); });
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<style>
+  @page { size: A4; margin: 14mm 16mm; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Microsoft YaHei", "PingFang SC", "SimSun", sans-serif;
+    color: #1d2738;
+    font-size: 10pt;
+    line-height: 1.46;
+  }
+  h1 {
+    font-family: "SimSun", "Songti SC", serif;
+    font-size: 16.5pt;
+    color: #16294a;
+    margin: 0 0 1.5mm;
+    letter-spacing: 0.03em;
+  }
+  .meta {
+    color: #6b7280;
+    font-size: 8.2pt;
+    margin: 0 0 2.5mm;
+    border-bottom: 1.5px solid #16294a;
+    padding-bottom: 1.5mm;
+  }
+  h2 {
+    font-family: "SimSun", "Songti SC", serif;
+    font-size: 10.8pt;
+    color: #16294a;
+    margin: 2.6mm 0 1mm;
+  }
+  p { margin: 0 0 1.1mm; text-align: justify; }
+  ol, ul { margin: 0 0 1mm; padding-left: 5mm; }
+  li { margin-bottom: 0.6mm; }
+  strong { color: #16294a; }
+  .lead {
+    background: #f7f3e9;
+    border-left: 3px solid #2b4470;
+    padding: 1.8mm 2.8mm;
+    margin: 0 0 2mm;
+  }
+  .kpis { display: flex; gap: 3mm; margin: 1.8mm 0; }
+  .kpi {
+    flex: 1; text-align: center; background: #f7f3e9;
+    border: 1px solid #ddd6c8; border-top: 2px solid #16294a; padding: 1.4mm 1mm;
+  }
+  .kpi .n { font-size: 13pt; color: #16294a; font-weight: bold; }
+  .kpi .t { font-size: 7.8pt; color: #5d6678; }
+  table { width: 100%; border-collapse: collapse; margin: 0.8mm 0 1.2mm; font-size: 8.6pt; }
+  th, td { border: 1px solid #ddd6c8; padding: 0.9mm 1.8mm; text-align: left; vertical-align: top; }
+  th { background: #16294a; color: #fff; font-weight: normal; }
+  td.fail { background: #fbf3f0; }
+  .tag-ok { color: #1f6b3a; font-weight: bold; }
+  .tag-no { color: #a33; font-weight: bold; }
+  .small { font-size: 8pt; color: #5d6678; }
+  .footer {
+    margin-top: 2.5mm; border-top: 1px solid #ddd6c8; padding-top: 1.2mm;
+    font-size: 7.6pt; color: #8a8f9a; display: flex; justify-content: space-between;
+  }
+</style>
+</head>
+<body>
+  <h1>一页结论 · 白酒年报问答知识库</h1>
+  <p class="meta">第三课「知识的深加工」· 作业方向 A　|　黄叶菁 · HYJ349　|　对应课程 P61–63 / P90–92 / P163</p>
+
+  <div class="lead">
+    用 12 家白酒上市公司 2024、2025 两年的 24 份真实年报，做一个<strong>可溯源</strong>的检索式问答库：提问后从 28,498 个知识块里返回最相关的原文片段并标出<strong>公司 / 年份 / 页码</strong>。落在课程<strong>深度二（向量 RAG）</strong>。结论：<strong>精确数字 + 出处类问题适合建库；口径风格类问题才适合微调；跨公司排序类问题两者都不够，需要计算层。</strong>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="n">12 家</div><div class="t">白酒上市公司</div></div>
+    <div class="kpi"><div class="n">24 份</div><div class="t">官方年报（57.7 MB）</div></div>
+    <div class="kpi"><div class="n">28,498</div><div class="t">知识块（表格+正文）</div></div>
+    <div class="kpi"><div class="n">10 题</div><div class="t">实测：5 可答 / 3 部分 / 2 失败</div></div>
+  </div>
+
+  <h2>最有代表性的结果：精确到页码、数字可核对</h2>
+  <table>
+    <tr><th>问题</th><th>命中出处</th><th>原文数值</th></tr>
+    <tr><td>贵州茅台 2024 营业总收入？</td><td>2024 年报 P63 合并利润表</td><td>174,144,069,958.25 元（≈1741 亿）</td></tr>
+    <tr><td>洋河股份 2024 经营现金流净额？</td><td>2024 年报 P20 表格</td><td>4,628,711,237.28 元（≈46.3 亿）</td></tr>
+    <tr><td>五粮液 2024 营业总收入？</td><td>2024 年报 P60 合并利润表</td><td>89,175,178,322.70 元（≈892 亿）</td></tr>
+  </table>
+  <p class="small">判定口径：Top-3 含与问题匹配的原文即算"召回成功"，不等于系统直接给出答案——数字由人从片段里读出。</p>
+
+  <h2>两道全景题的表现（如实记录，未改对）</h2>
+  <table>
+    <tr><th>全景题</th><th>实际表现</th><th>判定</th></tr>
+    <tr class="fail"><td>9. 哪家公司 2024 营业总收入最高？</td><td>Top-3 返回今世缘、五粮液、泸州老窖片段，<strong>漏掉实际最高的贵州茅台</strong>；无汇总、无排序，得不出"哪家最高"。</td><td><span class="tag-no">失败</span></td></tr>
+    <tr class="fail"><td>10. 12 家公司 2024 营业总收入排名</td><td>返回舍得、水井坊等零散利润表片段；系统<strong>不做跨表取数与排序</strong>，给不出完整排名。</td><td><span class="tag-no">失败</span></td></tr>
+  </table>
+
+  <h2>失败原因（不回避负面结果）</h2>
+  <ol>
+    <li><strong>排序未实际计算：</strong>检索按术语相似度排序，"最高 / 排名"要跨公司取同一指标再比较，超出纯检索能力——两道全景题都卡在这里。</li>
+    <li><strong>放开公司过滤后精度下降：</strong>全景题不含公司名，BM25/TF-IDF 被高频词主导，反而漏掉关键公司（茅台）。</li>
+    <li><strong>片段缺失 ≠ 未披露：</strong>表格切块把表头与数值行分开，返回片段里没数字不代表年报没写；个别题（i茅台收入、古井毛利率）只召回表头，属切块粒度问题。</li>
+    <li><strong>向量是轻量替代：</strong>TF-IDF 非语义向量；本地无 GPU，未接入 Qwen3-Embedding，语义泛化能力有限。</li>
+  </ol>
+
+  <h2>方法与课程关系</h2>
+  <p>巨潮资讯公告接口按 orgId 下载年报 → 词坐标聚类还原表格（绕开会段错误的 <code>find_tables()</code>）→ BM25 关键词 + TF-IDF 向量双路召回、RRF 融合 → 查询改写剥离高频词（帮助单公司细节题更稳地召回原文术语，但不解决排序）。这一课讲"五个深度、同一目标"，本作业落在<strong>深度二</strong>：不动模型，靠检索让模型看到最相关原文；进一步可接深度三（图谱）做跨公司关系，或加计算层解决排序。</p>
+
+  <div class="footer">
+    <span>代码仓库：github.com/HYJ349/baijiu-rag</span>
+    <span>逐题答案 / 召回原文 / 页码 / 评价：tests/results.md · tests/evaluation.md</span>
+  </div>
+</body>
+</html>
