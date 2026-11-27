@@ -1,0 +1,13 @@
+# 财报原件（体积大，下载脚本可重建）
+data/pdfs/
+# 切块正文与索引（体量大，build_index.py 可重建）
+data/chunks/chunks.json
+index/*.pkl
+index/*.npz
+# 密钥与环境（如有）
+.env
+*.key
+# Python 缓存
+__pycache__/
+*.py[cod]
+.venv/
